@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大一线性代数启发式辅导助手</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+        body{background:#f4f7fa;display:flex;justify-content:center;padding:20px}
+        .container{width:100%;max-width:720px;background:white;border-radius:14px;box-shadow:0 2px 12px #00000015;overflow:hidden}
+        .header{background:#2563eb;color:white;padding:16px;text-align:center;font-size:18px;font-weight:bold}
+        #chatBox{height:500px;padding:16px;overflow-y:auto}
+        .msg{margin:8px 0;display:flex}
+        .user{justify-content:flex-end}
+        .ai{justify-content:flex-start}
+        .msg div{max-width:80%;padding:10px 14px;border-radius:10px;line-height:1.5}
+        .user div{background:#2563eb;color:white;border-bottom-right-radius:2px}
+        .ai div{background:#eef2ff;color:#222;border-bottom-left-radius:2px}
+        .input-area{display:flex;padding:12px;border-top:1px solid #eee}
+        #inputMsg{flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;outline:none;font-size:16px}
+        #sendBtn{margin-left:8px;padding:10px 18px;background:#2563eb;color:white;border:none;border-radius:8px;cursor:pointer}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">大一线性代数启发式辅导助手</div>
+        <div id="chatBox"></div>
+        <div class="input-area">
+            <input id="inputMsg" placeholder="请输入你的线性代数问题">
+            <button id="sendBtn">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // ========= 已经填好你的腾讯元器信息 =========
+        const appId = "2109802200862747712";
+        const apiKey = "Z1xpWeti2ObitRGqn2Tp4O1Me11kokZm";
+        // ===============================================
+
+        const chatBox = document.getElementById("chatBox");
+        const inputMsg = document.getElementById("inputMsg");
+        const sendBtn = document.getElementById("sendBtn");
+
+        function addMsg(text, isUser){
+            const div = document.createElement("div");
+            div.className = isUser ? "msg user" : "msg ai";
+            div.innerHTML = `<div>${text}</div>`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendQuestion(){
+            const question = inputMsg.value.trim();
+            if(!question) return;
+            addMsg(question, true);
+            inputMsg.value = "";
+
+            try{
+                // 跨域代理，解决浏览器拦截，仅竞赛答辩演示使用
+                const res = await fetch("https://corsproxy.io/?https://yuanqi.tencent.com/openapi/v1/agent/chat/completions",{
+                    method:"POST",
+                    headers:{
+                        "Authorization":`Bearer ${apiKey}`,
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify({
+                        app_id: appId,
+                        messages: [{"role":"user","content": question}]
+                    })
+                })
+                const data = await res.json();
+                const answer = data.choices[0].message.content;
+                addMsg(answer, false);
+            }catch(err){
+                addMsg("接口调用失败！检查AppID、密钥或者网络",false);
+                console.error(err);
+            }
+        }
+
+        sendBtn.onclick = sendQuestion;
+        inputMsg.onkeydown = e=>{if(e.key==="Enter") sendQuestion()};
+    </script>
+</body>
+</html>
